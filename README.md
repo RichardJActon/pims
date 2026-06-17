@@ -81,6 +81,7 @@ Copy the text from ```database/create_database_and_user.txt``` into the shell to
 
 Once that's done run ```database/setup_database.py``` to check the connection and set up the collections you are going to use.
 
+*as mongo creates these entries on the fly setup-databases does not appear to do anything unless the globals are to make the db objects available somewhere else in the app? - alternatively clearing the database to start with it empty*
 
 Start the app
 -------------
@@ -97,3 +98,8 @@ This should start the server and you should have a basic system running on 127.0
 
 You should change the name in this to whatever you changed your app name to.
 
+
+# Qs
+
+- Details of babraham LDAP config - would like to replicate the basics in testing env
+- 

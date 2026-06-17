@@ -1,0 +1,26 @@
+# add organisation
+# dn: o,dc=babraham,dc=ac,dc=uk
+# objectClass: organizational
+# o: babraham
+
+# add organisational unit
+dn: ou,dc=babraham,dc=ac,dc=uk
+objectClass: organizationalUnit
+ou: bioinformatics
+
+# Add user
+dn: cn=RichardJActon,ou=bioinformatics,dc=babraham,dc=ac,dc=uk
+objectClass: person
+cn: RichardJActon
+sn: RichardJActon
+uid: RichardJActon
+userPassword: password123
+
+# Add group
+dn: cn=bioinformatics-team,dc=babraham,dc=ac,dc=uk
+objectClass: top
+objectClass: groupOfNames
+cn: bioinformatics-team
+description: bioinformatics team
+member: cn=RichardJActon,ou=bioinformatics,dc=babraham,dc=ac,dc=uk
+

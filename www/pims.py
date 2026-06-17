@@ -10,6 +10,7 @@ import json
 import ldap
 import time
 import datetime
+import os
 
 app = Flask(__name__)
 
@@ -327,6 +328,12 @@ def process_login():
     # Check the password against AD
     conn = ldap.initialize("ldap://"+server_conf["server"]["ldap"])
     conn.set_option(ldap.OPT_REFERRALS, 0)
+
+    # bypass auth
+    response = make_response(sessioncode)
+    response.set_cookie("pims_session_id",sessioncode)
+    return(response)
+
     try:    
         conn.simple_bind_s(username+"@"+server_conf["server"]["ldap"], password)
 
@@ -528,6 +535,8 @@ def jsonify(data):
 def get_server_configuration():
     with open(Path(__file__).resolve().parent.parent / "configuration/conf.json") as infh:
         conf = json.loads(infh.read())
+        conf['server']['username'] = os.environ['MONGO_ROOT_USER']
+        conf['server']['password'] = os.environ['MONGO_ROOT_PWD']
     return conf
 
 
