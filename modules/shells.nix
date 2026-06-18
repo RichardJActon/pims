@@ -6,7 +6,7 @@
       # };
       dev = pkgs.mkShellNoCC {
         packages = with pkgs; [
-          mongodb
+          # mongodb
           mongosh
           uv
           openldap
