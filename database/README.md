@@ -1,5 +1,38 @@
 # Mongodb setup
 
+## quickstart
+
+To get a local mongodb instance running for development purposes run the
+`setup.sh` script in this directory **from** the project root directory.
+
+NB port 27017 needs to be available and the script will attempt to kill
+anything that is using it.
+
+````
+./database/setup.sh
+````
+
+This will start up a mongodb instance, configure auth,
+restart it with auth enabled (apparently the only way to do this),
+and create a PIMS user and db.
+
+Variables expected to be defined:
+
+```
+MONGODB_HOST="127.0.0.1"
+MONGODB_PORT="27017"
+
+MONGO_ROOT_USER=root
+MONGO_ROOT_PWD=<>
+MONGO_DATABASE=pims_database
+MONGO_PIMS_USER=pimsuser
+MONGO_PIMS_USER_PWD=<>
+```
+
+I store these in a `.env` file that is sourced when I enter my development shell
+
+## Notes
+
 It does not appear possible to start mongodb with authentication pre-configured
 It must be started, accessed over local host, have users and credentials defined,
 then it can be restarted and authentication/authorisation can then be enforced based on the previously defined credentials and roles.
@@ -8,51 +41,25 @@ then it can be restarted and authentication/authorisation can then be enforced b
 
 Note that Even after this is configured you still seem to be able to connect to the databse but are just not able to perform any actions as an unauthenticated user.
 
-It is possible to provide `mongod` with some configureation from a file on startup:
+NB `database/dbdata` & `database/nohup.out` should be in in the `.gititnore`
+
+Scripts can be executed on a mongodb instance via the `mongosh` cli client
 
 ```
-mongod --config database/mongodb.conf
+mongosh --host 127.0.0.1 --file example.js
 ```
 
-`mongodb.conf`:
+Or executed directly:
 
 ```
-# processManagement:
-#     fork: true # background the process by default
-net:
-    bindIp: localhost # other interfaces can be listed here space seperated
-    port: 27017
-storage:
-    dbPath: dbdata
-systemLog:
-    destination: file
-    path: dbdata/mongod.log
-    logAppend: true
-security:
-    authorization: enabled # Only connections on localhost *should* be able to perform any actions by default
+mongosh --host 127.0.0.1 --eval 'use admin'
 ```
 
-`database/dbdata` should be in in the `.gititnore`
-
-Scripts can also be executed on a mongodb instance via the `mongosh` cli client
-
-```
-mongosh --host 127.0.0.1 --file setup.js
-```
+I was having issue with reading environment variables in scripts passed as files to mongosh.
 
 Credentials should only be ephemorally available in environment variables in the shell from which this script is run
 
-Variables expected to be defined:
-
-```
-MONGO_ROOT_USER=root
-MONGO_ROOT_PWD=<>
-MONGO_DATABASE=pims_database
-MONGO_PIMS_USER=pimsuser
-MONGO_PIMS_USER_PWD=<>
-```
-
-Create the the admin database and user with `setup.js`:
+Create the the admin database and user:
 
 ```
 use admin
@@ -64,7 +71,7 @@ db.createUser({
 quit()
 ```
 
-Create the pims user and database seperately using the root credentials `pims_db_setup.js`:
+Create the pims user and database seperately using the root credentials:
 
 ```
 use process.env.MONGO_DATABASE
@@ -76,40 +83,26 @@ db.createUser({
 quit()
 ```
 
-Subsequent mongodb actions should only need the pims user's permissions so configuring like this should mean that any attempts to perform mongodb actions which require other permissions will fail as they would in production.
+Subsequent mongodb actions should only need the pims user's permissions.
+So configuring like this should mean that any attempts to perform mongodb
+actions which require other permissions will fail as they would in production.
 
-bash script to clean and previous state and re-provision a clean database for development
+bash script to clean and previous state and re-provision a clean database for development:
 
 - kill any running mongo processes
 - clear old database files
 - start mongod
 - configure auth
-  - May not need root user with these expansive permissions to exist, no user may need to exist with priviledges on databases other than the application database
+  - Note: May not need root user with these expansive permissions to exist,
+    no user may need to exist with priviledges on databases other than the application database
 - kill mongod
 - start mongod in the background with auth enforced
 - connect with root credentials
 - create pims user, db, & set permissions
 
-(NB use subprocess to & sigterm to improve portability when running the mondod commands from the script)
+(NB use subprocess to & sigterm to improve portability when running the mongod commands from the script)
 
-Note that collections created in mongodb need to have something in them for their namespace to persist, they cannot be empty or they disappear.
+Note that collections created in mongodb need to have something in them for their namespace to persist,
+they cannot be empty or they disappear.
 
 
-
-setup.sh
-
-```
-#!/usr/bin/env bash
-kill $mongodbpid
-cd database
-rm -rf dbdata/
-mkdir dbdata
-mongod --config mongodb.conf &
-mongodpid=$!
-mongosh --host 127.0.0.1 --file setup.js
-kill $mongodpid
-nohup mongod --config mongodb.conf &
-export mongodpid=$!
-echo $mongodpid
-mongosh --host 127.0.0.1 -u $MONGO_ROOT_USER -p $MONGO_ROOT_PWD --file pims_db_setup.js
-```
