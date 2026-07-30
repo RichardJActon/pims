@@ -1,6 +1,6 @@
 # add organisation
-dn: o,dc=babraham,dc=ac,dc=uk
-objectClass: organizational
+dn: dc=babraham,dc=ac,dc=uk
+objectClass: organization
 o: babraham
 
 # add organisational unit

@@ -1,0 +1,11 @@
+dn: cn=config
+# dn: olcDatabase=mdb,cn=config
+# objectClass: olcDatabaseConfig
+# objectClass: olcMdbConfig
+# olcDatabase: mdb
+# OlcDbMaxSize: 1073741824
+# olcSuffix: dc=eng,dc=uni,dc=edu,dc=eu
+# olcRootDN: cn=Manager,dc=eng,dc=uni,dc=edu,dc=eu
+# olcRootPW: secret
+# olcDbDirectory: ./ldap/openldap-data
+# olcDbIndex: objectClass eq
