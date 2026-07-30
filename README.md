@@ -1,19 +1,18 @@
-# Web System Base
+# Proteomics LIMS system (PIMS)
+
 This is a starting point for new web resources on our site.
 
-It provides a basic setup of a flask app with bootstrap templates and a mongo db backend.  It handles user logins linked initially to an LDAP server.
+It provides a basic setup of a flask app with bootstrap templates and a mongo db backend.
+It handles user logins linked initially to an LDAP server.
 
 Using this code
 ===============
 
-To use this as a starting point for a new system you need to clone this repository.  To do this create a new github repository with no content then do
+To work with this you need to clone this repository.
 
 ```
-git clone --bare https://github.com/s-andrews/websystembase.git
-cd websystembase.git
-git push --mirror https://github.com/s-andrews/newrepositoryname.git
-cd ..
-rm -rf websystembase.git
+git clone https://github.com/RichardJActon/pims.git
+cd pims
 ```
 
 Changes to make
@@ -35,13 +34,8 @@ In the ```database/setup_database.py``` script you'll need to change the name of
 Cookie Name
 -----------
 
-You'll need to select a name for your session cookie.  This will be set in the ```www/static/js/main.js``` file in all of the ```Cookies.set Cookies.get Cookies.remove``` statements
-
-
-Application Name
-----------------
-
-You should rename the main python script which is the flask entrypoint.  This is the ```.py``` file in the root of the ```www``` folder
+You'll need to select a name for your session cookie.
+This will be set in the ```www/static/js/main.js``` file in all of the ```Cookies.set Cookies.get Cookies.remove``` statements
 
 
 Setting up the system
@@ -53,13 +47,6 @@ Create a venv
 -------------
 
 From the root of the repository
-
-On windows
-```
-python -m venv venv
-venv\Scripts\activate.bat
-pip install -r requirements.txt
-```
 
 You'll also need to download and install a binary python-ldap whl from https://www.lfd.uci.edu/~gohlke/pythonlibs/
 
@@ -91,7 +78,7 @@ From the shell in which you started the venv
 Move to the ```www``` folder
 
 ```
-flask --debug --app webapp.py run
+flask --debug --app pims.py run
 ```
 
 This should start the server and you should have a basic system running on 127.0.0.1:5000
