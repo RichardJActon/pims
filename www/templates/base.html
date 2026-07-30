@@ -22,7 +22,7 @@
               <img src="{{ url_for('static', filename='images/pims_logo_path_notext.svg') }}"  width=60% style="margin-left: auto; margin-right: auto;">
             </div>
             <div class="d-grid gap-2">
-              <a href="{{ url_for('index')}}" class="btn btn-primary" role="button">Home</a>
+              <a href="{{ url_for('index_page.index')}}" class="btn btn-primary" role="button">Home</a>
               <a href="{{ url_for('search')}}" class="btn btn-primary" role="button">Search</a>
               {% if person['is_admin'] %}
               <a href="{{ url_for('editproject')}}" class="btn btn-warning mt-3" role="buttoon">New Project</a>
