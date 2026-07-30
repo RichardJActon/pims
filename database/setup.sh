@@ -1,6 +1,36 @@
 #!/usr/bin/env bash
 # MONGODB_HOST="127.0.0.1"
 # MONGODB_PORT="27017"
+if [[ -z "$MONGODB_HOST" ]]; then
+  echo "MONGODB_HOST is not defined!"
+  exit 1
+fi
+
+if [[ -z "$MONGODB_PORT" ]]; then
+  echo "MONGODB_PORT is not defined!"
+  exit 1
+fi
+
+if [[ -z "$MONGO_ROOT_USER" ]]; then
+  echo "MONGO_ROOT_USER is not defined!"
+  exit 1
+fi
+
+if [[ -z "$MONGO_ROOT_PWD" ]]; then
+  echo "MONGO_ROOT_PWD is not defined!"
+  exit 1
+fi
+
+if [[ -z "$MONGO_PIMS_USER" ]]; then
+  echo "MONGO_PIMS_USER is not defined!"
+  exit 1
+fi
+
+if [[ -z "$MONGO_PIMS_USER_PWD" ]]; then
+  echo "MONGO_PIMS_USER_PWD is not defined!"
+  exit 1
+fi
+
 if [[ $mongodpid ]]; then
   echo "'mongodpid' is defined - killing existing mongodb process"
   kill "$mongodpid"
@@ -24,7 +54,7 @@ echo "moving out of database dir"
 cd ..
 echo "initial database setup:"
 echo "killing any process using port: $MONGODB_PORT"
-fuser -k $MONGODB_PORT/tcp
+fuser -k "$MONGODB_PORT/tcp"
 echo "starting first MongoDB instance to configure auth"
 # mongod --config mongodb.conf &
 mongod \
@@ -67,7 +97,7 @@ mongosh \
 # when starting a new instance it can fail as it cannot bind the port.
 # To prevent this we firt make sure that the port is freed.
 echo "killing any process still using port: $MONGODB_PORT"
-fuser -k $MONGODB_PORT/tcp
+fuser -k "$MONGODB_PORT/tcp"
 
 echo "start with auth enforcement on"
 nohup mongod \
