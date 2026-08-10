@@ -132,5 +132,31 @@ mongosh \
         {role: 'readWrite', db: \"$MONGO_DATABASE\"}
       ]
     })"
-    
+
+echo "Create test users"
+
+mongosh \
+  --host "$MONGODB_HOST" --port "$MONGODB_PORT" \
+  -u "$MONGO_PIMS_USER" -p "$MONGO_PIMS_USER_PWD" \
+  --authenticationDatabase admin \
+  --eval "use $MONGO_DATABASE" \
+  --eval "db.createCollection('people_collection')" \
+  --eval "db.people_collection.insertOne({
+    'name': 'admin',
+    'username': 'admin',
+    'is_admin': 'true',
+    'email': 'admin@test.com',
+    'disabled': 'false',
+    'failed_logins': []
+  })" \
+  --eval "db.people_collection.insertOne({
+    'name': 'test',
+    'username': 'test',
+    'is_admin': 'false',
+    'email': 'test@test.com',
+    'disabled': 'false',
+    'failed_logins': []
+  })"
+  
 exit 1
+
