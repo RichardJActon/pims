@@ -123,11 +123,14 @@ mongosh \
   --host "$MONGODB_HOST" --port "$MONGODB_PORT" \
   -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PWD" \
   --authenticationDatabase admin \
-  --eval "use $MONGO_DATABASE" \
+  --eval "use admin" \
   --eval "db.createUser({
       user: \"$MONGO_PIMS_USER\",
       pwd: \"$MONGO_PIMS_USER_PWD\",
-      roles: ['dbAdmin', 'readWrite']
+      roles: [
+        {role: 'dbAdmin', db: \"$MONGO_DATABASE\"},
+        {role: 'readWrite', db: \"$MONGO_DATABASE\"}
+      ]
     })"
     
 exit 1
