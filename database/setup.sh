@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
-# MONGODB_HOST="127.0.0.1"
-# MONGODB_PORT="27017"
-if [[ -z "$MONGODB_HOST" ]]; then
-  echo "MONGODB_HOST is not defined!"
+if [[ -z "$PIMS__MONGO__HOST" ]]; then
+  echo "PIMS__MONGO__HOST is not defined!"
   exit 1
 fi
 
-if [[ -z "$MONGODB_PORT" ]]; then
-  echo "MONGODB_PORT is not defined!"
+if [[ -z "$PIMS__MONGO__PORT" ]]; then
+  echo "PIMS__MONGO__PORT is not defined!"
   exit 1
 fi
 
@@ -21,13 +19,13 @@ if [[ -z "$MONGO_ROOT_PWD" ]]; then
   exit 1
 fi
 
-if [[ -z "$MONGO_PIMS_USER" ]]; then
-  echo "MONGO_PIMS_USER is not defined!"
+if [[ -z "$PIMS__MONGO__USER" ]]; then
+  echo "PIMS__MONGO__USER is not defined!"
   exit 1
 fi
 
-if [[ -z "$MONGO_PIMS_USER_PWD" ]]; then
-  echo "MONGO_PIMS_USER_PWD is not defined!"
+if [[ -z "$PIMS__MONGO__PWD" ]]; then
+  echo "PIMS__MONGO__PWD is not defined!"
   exit 1
 fi
 
@@ -53,12 +51,12 @@ mkdir dbdata
 echo "moving out of database dir"
 cd ..
 echo "initial database setup:"
-echo "killing any process using port: $MONGODB_PORT"
-fuser -k "$MONGODB_PORT/tcp"
+echo "killing any process using port: $PIMS__MONGO__PORT"
+fuser -k "$PIMS__MONGO__PORT/tcp"
 echo "starting first MongoDB instance to configure auth"
 # mongod --config mongodb.conf &
 mongod \
-  --bind_ip "$MONGODB_HOST" --port "$MONGODB_PORT" \
+  --bind_ip "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
   --logappend --logpath database/dbdata/mongod.log \
   --dbpath database/dbdata \
   &
@@ -66,7 +64,7 @@ mongod \
 
 echo "config admin user"
 mongosh \
-  --host "$MONGODB_HOST" --port "$MONGODB_PORT" \
+  --host "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
   --eval 'use admin' \
   --eval 'db.createUser({
     user: process.env.MONGO_ROOT_USER,
@@ -87,7 +85,7 @@ mongosh \
 
 # echo "config admin user"
 # mongosh \
-#   --host "$MONGODB_HOST" --port "$MONGODB_PORT" \
+#   --host "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
 #   --file database/setup.js
 
 # echo "kill first MongoDB instance PID $mongodpid"
@@ -96,12 +94,12 @@ mongosh \
 # Initial MongoDB instance does not immediately relinquish the port so
 # when starting a new instance it can fail as it cannot bind the port.
 # To prevent this we firt make sure that the port is freed.
-echo "killing any process still using port: $MONGODB_PORT"
-fuser -k "$MONGODB_PORT/tcp"
+echo "killing any process still using port: $PIMS__MONGO__PORT"
+fuser -k "$PIMS__MONGO__PORT/tcp"
 
 echo "start with auth enforcement on"
 nohup mongod \
-  --bind_ip "$MONGODB_HOST" --port "$MONGODB_PORT" \
+  --bind_ip "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
   --logappend --logpath database/dbdata/mongod.log \
   --dbpath database/dbdata \
   --setParameter enableLocalhostAuthBypass=false \
@@ -120,26 +118,29 @@ disown
 echo "logging in as root user to create pims user and DB"
 
 mongosh \
-  --host "$MONGODB_HOST" --port "$MONGODB_PORT" \
+  --host "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
   -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PWD" \
   --authenticationDatabase admin \
   --eval "use admin" \
   --eval "db.createUser({
-      user: \"$MONGO_PIMS_USER\",
-      pwd: \"$MONGO_PIMS_USER_PWD\",
+      user: \"$PIMS__MONGO__USER\",
+      pwd: \"$PIMS__MONGO__PWD\",
       roles: [
-        {role: 'dbAdmin', db: \"$MONGO_DATABASE\"},
-        {role: 'readWrite', db: \"$MONGO_DATABASE\"}
+        {role: 'dbAdmin', db: \"$PIMS__MONGO__DATABASE\"},
+        {role: 'readWrite', db: \"$PIMS__MONGO__DATABASE\"}
       ]
     })"
 
 echo "Create test users"
 
+# NB add validator to people collection:
+# https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/#std-label-schema-validation-json
+
 mongosh \
-  --host "$MONGODB_HOST" --port "$MONGODB_PORT" \
-  -u "$MONGO_PIMS_USER" -p "$MONGO_PIMS_USER_PWD" \
+  --host "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
+  -u "$PIMS__MONGO__USER" -p "$PIMS__MONGO__PWD" \
   --authenticationDatabase admin \
-  --eval "use $MONGO_DATABASE" \
+  --eval "use $PIMS__MONGO__DATABASE" \
   --eval "db.createCollection('people_collection')" \
   --eval "db.people_collection.insertOne({
     'name': 'admin',

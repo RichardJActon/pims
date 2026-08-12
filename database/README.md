@@ -19,17 +19,26 @@ and create a PIMS user and db.
 Variables expected to be defined:
 
 ```
-MONGODB_HOST="127.0.0.1"
-MONGODB_PORT="27017"
+PIMS__MONGO__HOST="127.0.0.1"
+PIMS__MONGO__PORT="27017"
 
 MONGO_ROOT_USER=root
 MONGO_ROOT_PWD=<>
-MONGO_DATABASE=pims_database
-MONGO_PIMS_USER=pimsuser
-MONGO_PIMS_USER_PWD=<>
+PIMS__MONGO__DATABASE=pims_database
+PIMS__MONGO__USER=pimsuser
+PIMS__MONGO__PWD=<>
 ```
 
 I store these in a `.env` file that is sourced when I enter my development shell
+
+To connect to a running instance with the root user:
+
+```
+mongosh \
+  --host "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
+  -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PWD" \
+  --authenticationDatabase admin
+```
 
 ## Notes
 
@@ -74,10 +83,10 @@ quit()
 Create the pims user and database seperately using the root credentials:
 
 ```
-use process.env.MONGO_DATABASE
+use process.env.PIMS__MONGO__DATABASE
 db.createUser({
-  user: process.env.MONGO_PIMS_USER,
-  pwd: process.env.MONGO_PIMS_USER_PWD,
+  user: process.env.PIMS__MONGO__USER,
+  pwd: process.env.PIMS__MONGO__PWD,
   roles: ["dbAdmin", "readWrite"],
 })
 quit()
