@@ -145,17 +145,17 @@ mongosh \
   --eval "db.people_collection.insertOne({
     'name': 'admin',
     'username': 'admin',
-    'is_admin': 'true',
+    'is_admin': true,
     'email': 'admin@test.com',
-    'disabled': 'false',
+    'disabled': false,
     'failed_logins': []
   })" \
   --eval "db.people_collection.insertOne({
     'name': 'test',
     'username': 'test',
-    'is_admin': 'false',
+    'is_admin': false,
     'email': 'test@test.com',
-    'disabled': 'false',
+    'disabled': false,
     'failed_logins': []
   })"
   
