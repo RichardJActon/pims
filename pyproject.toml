@@ -9,3 +9,20 @@ dependencies = [
     "pymongo>=4.17.0",
     "python-ldap>=3.4.7",
 ]
+
+[dependency-groups]
+dev = [
+    "ptpython>=3.0.32",
+    "pytest>=9.1.1",
+    "pytest-sphinx>=0.7.1",
+    "sphinx>=9.0.4",
+    "sphinx-book-theme>=1.4.0",
+]
+
+[tools.pytest.ini_options]
+pythonpath = ["src", "tests"]
+addopts = [
+    "--doctest-modules",
+    "--ignore data",
+    "--ignore database"
+]
