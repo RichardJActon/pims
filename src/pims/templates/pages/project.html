@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <h2 class="text-center">{{ project.title}} (Project {{project.project_id}})</h2>
+</div>
+
+<div class="row">
+    <p class="text-center">
+        <span class="status {{ project.status }}">{{ project.status }}</span> | {{ project.owner }} | <button type="button" class="btn btn-sm btn-primary">Share</button> | <button type="button" class="btn btn-sm btn-warning">Budget</button> | <a role="button" type="button" class="btn btn-sm btn-warning" href="/editproject/{{project.project_id}}">Edit</a>
+    </p>
+</div>
+
+<div class="row">
+    <pre>{{ project.description }}</pre>
+</div>
+
+<div class="row">
+    <h3 class="text-center mt-5">Samples</h3>
+</div>
+<div class="row">
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">State</th>
+                <th scope="col">Organism</th>
+                {% for tag in project.tags %}
+                <th scope="col">{{ tag }}</th>
+                {% endfor %}
+                <th scope="col">Status</th>
+                <th scope="col">Delete</th>
+                <th scope="col">Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if project.samples %}
+            {% else %}
+            <tr>
+                <td colspan={{ project.tags|length +7 }} class="text-center">No samples</td>
+            </tr>
+            {% endif %}
+            {% for sample in project.samples %}
+            <tr>
+                <td>{{ project.project_id }}-{{sample.sample_id}}</td>
+                <td>{{ sample.name }}</td>
+                <td>{{ sample.state }}</td>
+                <td>{{ sample.organism }}</td>
+                {% for tag in project.tags %}
+                <td>{{ sample.tags[tag] }}</th>
+                {% endfor %}
+                <td>{{ sample.status }}</td>
+                <td><button class="btn btn-sm deletesample btn-danger">Delete</button></td>
+                <td><button class="btn btn-sm editsample btn-success">Edit</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="row">
+    <button class="btn btn-primary" id="add_sample" style="width:25%;margin-left: auto;margin-right: auto;">Add Sample</button>
+</div>
+
+<div class="row">
+    <h3 class="text-center mt-5">Timeline</h3>
+</div>
+
+{% if person.is_admin %}
+<div class="row">
+    <button class="btn btn-primary" id="add_event" style="width:25%;margin-left: auto;margin-right: auto;">Add Event</button>
+</div>
+{% endif%}
+
+
+    <div id="editsamplediv" class="modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-center">
+            <h2 id="sample_modal_header">Add Sample</h2>
+            </div>
+            <div class="modal-body">
+                <label for="sample_name">Sample Name</label>
+                <input class="form-control" type="text" id="sample_name">
+                <label for="sample_state">Sample State</label>
+                <input class="form-control" type="text" list="state-list" id="sample_state">
+                <datalist id="state-list">
+                    <option>Gel Slice</option>
+                    <option>Aqueous Solution</option>
+                    <option>Dried</option>
+                    <option>PAGE Gel</option>
+                    <option>Gel Pieces</option>
+                    <option>Beads</option>
+                </datalist>
+                <label for="sample_state">Organism</label>
+                <input class="form-control" type="text" id="organism">
+                {% for tag in project.tags %}
+                <label for="tag_{{loop.index}}">{{tag}}</label>
+                <input class="form-control tag_value_input" type="text" id="tag_{{loop.index}}">
+                {% endfor %}
+                <button id="save_sample" type="button" class="form-control btn btn-primary mt-2">Save</button>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for('static', filename='js/project.js') }}"></script>
+{% endblock %}

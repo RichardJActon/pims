@@ -85,8 +85,56 @@ This should start the server and you should have a basic system running on 127.0
 
 You should change the name in this to whatever you changed your app name to.
 
+# Automated Testing
+
+To run tests using the following command in the route directory
+
+```
+pytest --doctest-modules --ignore data --ignore database
+```
+
+(NB - couldn't get the ignore directories in their pyproject.toml so invoking them directly)
+
+# Building Documentation
+
+The documentation in generated with sphinx, source files can be found in `docs/source`
+
+In `docs` run:
+
+```
+make html
+```
+
+To generate the documentation locally in `docs/build` this directory is ignored
+Built documentation is not to be committed to the repo a CI action will build and deploy it from what is pushed to the githost
 
 # Qs
 
 - Details of babraham LDAP config - would like to replicate the basics in testing env
-- 
+- config in XDG config?
+
+- sphinx docs
+- pytest
+
+- json schema validation on mongo
+- capture "version of app that last modified entry" in DB
+
+- ? explore moving to flask session management
+    encrypted session cookie, expiry options etc.
+
+
+# Style notes
+
+- when importing multiple functions explicitly from a module they should be listed one per line and the last should have a tailing comma
+
+```
+# from x import q w
+from x import (
+  q,
+  w,
+)
+```
+
+When imports are changed this makes for cleaner easier to read and diffs and git commits 
+
+

@@ -1,0 +1,25 @@
+#footer {
+    color: black;
+    background-color: lightgray;
+    padding: 1em;
+    margin-top: 2em;
+}
+
+pre {
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+
+.proposed {
+    background-color: gray;
+    color: white;
+    padding: 0.3em;
+    border-radius: 5%;
+}
