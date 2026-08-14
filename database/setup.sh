@@ -135,13 +135,48 @@ echo "Create test users"
 
 # NB add validator to people collection:
 # https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/#std-label-schema-validation-json
+# better examples than in the docs:
+# https://jsonic.io/guides/json-schema-mongodb
 
 mongosh \
   --host "$PIMS__MONGO__HOST" --port "$PIMS__MONGO__PORT" \
   -u "$PIMS__MONGO__USER" -p "$PIMS__MONGO__PWD" \
   --authenticationDatabase admin \
   --eval "use $PIMS__MONGO__DATABASE" \
-  --eval "db.createCollection('people_collection')" \
+  --eval "db.createCollection('people_collection', {
+      validator: {
+        \$jsonSchema: {
+          bsonType: 'object',
+          title: 'Person',
+          required: ['name', 'username', 'is_admin', 'email', 'disabled'],
+          properties: {
+            name: {
+              bsonType: 'string',
+              description: ''
+            },
+            username: {
+              bsonType: 'string',
+            },
+            is_admin: {
+              bsonType: 'bool'
+              
+            },
+            email: {
+              bsonType: 'string',
+              
+            },
+            disabled: {
+              bsonType: 'bool'
+              
+            }
+          },
+          additionalProperties: true
+        }
+      },
+      validationLevel: 'strict',
+      validationAction: 'error'
+    }
+  )" \
   --eval "db.people_collection.insertOne({
     'name': 'admin',
     'username': 'admin',
