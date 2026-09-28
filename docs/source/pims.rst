@@ -1,5 +1,5 @@
-pims
---------
+PIMS Functions Reference
+------------------------
 
 .. automodule:: pims
    :members:

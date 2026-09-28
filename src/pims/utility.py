@@ -12,7 +12,7 @@ from werkzeug.datastructures import ImmutableMultiDict
 from bson.json_util import dumps
 from bson.raw_bson import RawBSONDocument
 
-def jsonify(data: RawBSONDocument):
+def jsonify(data: RawBSONDocument) -> Response:
     """
     This is a function which deals with the bson structures
     specifically ObjectID which can't auto convert to json 
@@ -28,6 +28,7 @@ def jsonify(data: RawBSONDocument):
     return response
 
 def args_to_dict(args: ImmutableMultiDict) -> Dict[str, Any]:
+# def args_to_dict(args) -> Dict[str, Any]:
     """
     Converts Flask Request Arguments to a dictionary
     From the Flask Request Class:

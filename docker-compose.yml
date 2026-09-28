@@ -1,75 +1,52 @@
 services:
-  mongodb:
-    # image: mongodb/mongodb-community-server:6.0-ubi8
-    image: mongodb/mongodb-community-server:latest
-    user: "${UID:-1000}:${GID:-1000}"
-    container_name: mongodb
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:27017:27017"
-    volumes:
-      - ./data/mongodb:/data/db
-      - ./data/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    environment:
-      MONGODB_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGODB_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PWD}
-      MONGODB_INITDB_DATABASE: ${MONGO_DATABASE}
+  # Currently Running Mongo On Local host system via my nix environment
+  # (see database/README.md)
+  # Might be easier to move mongo here as it's not in the main nix binary caches
+  # and i'm already using docker for keycloak (see below)
+  # 
+  # mongodb:
+  #   # image: mongodb/mongodb-community-server:6.0-ubi8
+  #   image: mongodb/mongodb-community-server:latest
+  #   user: "${UID:-1000}:${GID:-1000}"
+  #   container_name: mongodb
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:27017:27017"
+  #   volumes:
+  #     - ./data/mongodb:/data/db
+  #     - ./data/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+  #   environment:
+  #     MONGODB_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+  #     MONGODB_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PWD}
+  #     MONGODB_INITDB_DATABASE: ${MONGO_DATABASE}
 
-  ldap:
-    image: osixia/openldap:latest
-    # image: cleanstart/openldap:latest
-    # image: bitnamilegacy/openldap:latest
-    container_name: ldap
+# Keycloak's docker test environment is very easy to use but looks like it'd
+# be a fair bit of work to make an equivalent setup in my local nix environment.
+# Quick-start development setup - NOT for production
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak-dev
+    command: start-dev
     environment:
-      # LDAP_ORGANISATION: babraham
-      # LDAP_DOMAIN: babraham.test
-      # LDAP_BASE_DN: "dc=babraham,dc=test"
-      LDAP_DOMAIN: babraham.ac.uk
-      LDAP_BASE_DN: "dc=babraham,dc=ac,dc=uk"
-      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PWD}
-      # 
-      # LDAP_PORT_NUMBER: 389
-      # LDAP_ROOT: "dc=babraham,dc=ac,dc=uk"
-      # LDAP_ADMIN_USERNAME: admin
-      # LDAP_TLS: "false" 
-    ports:
-      - 127.0.0.1:389:389
-      # - 127.0.0.1:636:636
-    command: --copy-service
-    volumes:
-      # - ./ldap_example.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/50-bootstrap.ldif
-      # - ./ldap_example.ldif:/etc/ldap/slapd.d/50-bootstrap.ldif
-      # - ./ldap_example.ldif:/ldifs/ldap_example.ldif
-      - ./data/openldap/ldap_example.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/50-bootstrap.ldif
-      # - ./data/openldap/openldap_data:/var/lib/ldap
-      # - ./data/openldap/openldap_config:/etc/ldap/slapd.d
-    # configs:
-    #   - source: ldapbootstrap
-    #     target: /container/service/slapd/assets/config/bootstrap/ldif/custom/50-bootstrap.ldif
-    # command: >
-    #   sh -c 'ldapadd -x -w ${LDAP_ADMIN_PWD} -D "dc=babraham,dc=ac,dc=uk" -f ldap_example.ldif'
-    # networks:
-    #   - ldap_network
-  phpldapadmin:
-    image: osixia/phpldapadmin:latest
-    container_name: phpldapadmin
-    environment:
-      # PHPLDAPADMIN_LDAP_HOSTS: openldap
-      PHPLDAPADMIN_LDAP_HOSTS: ldap
-      PHPLDAPADMIN_HTTPS: "false"   # deactivate HTTPS
-    ports:
-      - "127.0.0.1:8081:80"
-    restart: unless-stopped
-    depends_on:
-      - ldap
-    # networks:
-    #   - ldap_network
+      # Admin credentials
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
 
-# networks:
-#   ldap_network:
-#     driver: bridge
-# configs:
-#   ldapbootstrap:
-#     file: ./ldap_example.ldif
-#     # external: true
- 
+      # Development mode settings
+      KC_HTTP_PORT: 8080
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+
+      # Logging
+      KC_LOG_LEVEL: INFO
+
+    ports:
+      - "8080:8080"
+
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+

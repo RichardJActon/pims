@@ -1,17 +1,96 @@
 # login
-from flask import Blueprint, render_template, make_response, current_app, redirect, url_for
+from flask import (
+    Blueprint,
+    render_template,
+    make_response,
+    current_app,
+    redirect,
+    url_for,
+    session,
+)
+
 from pims.session import *
 from pims.utility import jsonify
 
+from datetime import datetime
 import time
 import ldap # move to ldap3? - better docs # move to ldap3? - better docs
 
-def construct_bp(people, projects, ips):
+def construct_bp(people, projects, ips, oauth):
     
     bp = Blueprint('login', __name__) 
-    @bp.route("/login")
+    @bp.route('/login')
     def login():
-        return render_template("pages/login.html")
+        redirect_uri = url_for('login.authorize', _external=True)
+        return oauth.testing.authorize_redirect(redirect_uri)
+        # return render_template("pages/login.html")
+
+    @bp.route('/authorize')# , methods = ['POST', 'GET'])
+    def authorize():
+        token = oauth.testing.authorize_access_token()
+        # resp = oauth.testing.get('user')
+        userinfo = token.get('userinfo')
+        current_app.logger.info(
+            "User: " + userinfo.get('preferred_username') +
+            " logged in, Authorised at: " +
+            str(datetime.fromtimestamp(userinfo.get('auth_time')))
+        )
+
+        # resp.raise_for_status()
+        # profile = resp.json()
+        user_query = {"username": userinfo["preferred_username"]}
+        person = people.find_one(user_query)
+        try:
+            if person is None:
+                make_new_person(
+                    people,
+                    username = userinfo['preferred_username'],
+                    name = userinfo['given_name'] + ' ' + userinfo['family_name'],
+                    email = userinfo['email']
+                )
+                person = people.find_one(user_query)
+                raise Exception(
+                    f"Person not found in database, created new Person: {userinfo['preferred_username']}"
+                )
+        except Exception as e:
+            current_app.logger.info(e)
+
+        try:
+            if "disabled" in person and person["disabled"]:
+                raise Exception(f"Account disabled for {person['username']}!")
+            else:
+                session["user"] = userinfo
+                session["id_token"] = token.get("id_token")
+        except Exception as e:
+            current_app.logger.info(str(e))
+        
+        # session["user"] = oauth.testing.userinfo()
+        # current_app.logger.info(session.get('user').get('userinfo'))
+        return redirect('/')
+        # return redirect('/profile')
+
+    # debugging user info
+    # @bp.route("/profile")
+    # def profile():
+    #     userinfo = session.get("user")
+    #     return f"<p>{str(userinfo)}</p>"
+
+    @bp.route("/logout")
+    def logout():
+        id_token = session.pop("id_token", None)
+        redirect_uri = url_for('login.logged_out', _external=True)
+        # redirect_uri = url_for('login.login', _external=True)
+        return oauth.testing.logout_redirect(
+            post_logout_redirect_uri = redirect_uri,
+            id_token_hint = id_token
+        )
+
+    @bp.route('/logged_out')
+    def logged_out():
+        state_data = oauth.testing.validate_logout_response()
+        session.pop("user", None)
+        return render_template("pages/logout_confirmation.html")
+        # return 'You have been logged out.'
 
     @bp.route("/processlogin", methods = ['POST', 'GET'])
     def process_login():
@@ -58,36 +137,42 @@ def construct_bp(people, projects, ips):
             # Calculate when any timeout ban would have to have started so that
             # it's expired now
             #
+            ip_lockout(
+                people, username, ips,
+                server_conf["security"]["lockout_time_mins"],
+                server_conf["security"]["failed_logins_per_ip"]
+            )
+            
             # !! server_conf ?
-            timeout_time = int(time.time())-(60*(int(server_conf["security"]["lockout_time_mins"])))
+            # timeout_time = int(time.time())-(60*(int(server_conf["security"]["lockout_time_mins"])))
 
 
-            # We'll check the IP first
-            ip = ips.find_one({"ip":request.remote_addr})
+            # # We'll check the IP first
+            # ip = ips.find_one({"ip":request.remote_addr})
     
-            if ip and len(ip["failed_logins"])>=server_conf["security"]["failed_logins_per_ip"]:
-                # Find if they've served the timeout
-                last_time = ip["failed_logins"][-1]
+            # if ip and len(ip["failed_logins"])>=server_conf["security"]["failed_logins_per_ip"]:
+            #     # Find if they've served the timeout
+            #     last_time = ip["failed_logins"][-1]
 
-                if last_time < timeout_time:
-                    # They've served their time so remove the records of failures
-                    ips.update_one({"ip":request.remote_addr},{"$set":{"failed_logins":[]}})
+            #     if last_time < timeout_time:
+            #         # They've served their time so remove the records of failures
+            #         ips.update_one({"ip":request.remote_addr},{"$set":{"failed_logins":[]}})
 
-                else:
-                    raise Exception("IP block timeout")
+            #     else:
+            #         raise Exception("IP block timeout")
 
-            # See if we have a record of failed logins for this user
-            person = people.find_one({"username":username})
+            # # See if we have a record of failed logins for this user
+            # person = people.find_one({"username":username})
 
-            if person and person["locked_at"]:
-                if person["locked_at"] > timeout_time:
-                    # Their account is locked
-                    raise Exception("User account locked")
-                else:
-                    # They've served their time, so remove the lock
-                    # and failed logins
-                    people.update_one({"username":username},{"$set":{"locked_at":0}})
-                    people.update_one({"username":username},{"$set":{"failed_logins":[]}})
+            # if person and person["locked_at"]:
+            #     if person["locked_at"] > timeout_time:
+            #         # Their account is locked
+            #         raise Exception("User account locked")
+            #     else:
+            #         # They've served their time, so remove the lock
+            #         # and failed logins
+            #         people.update_one({"username":username},{"$set":{"locked_at":0}})
+            #         people.update_one({"username":username},{"$set":{"failed_logins":[]}})
 
 
             # Check the password against AD
@@ -107,33 +192,9 @@ def construct_bp(people, projects, ips):
 
                 sessioncode = generate_id(20)
 
-
                 if not person:
                     new_person_from_ldap(people, username, server_conf, conn)
-                    # # We're making a new person.  We can therefore query AD
-                    # # to get their proper name and email.
 
-                    # # We can theoretically look anyone up, but this filter says
-                    # # that we're only interested in the person who logged in
-                    # filter = f"(&(sAMAccountName={username}))"
-
-                    # # The values we want to retrive are their real name (not 
-                    # # split by first and last) and their email
-                    # search_attribute = ["distinguishedName","mail"]
-
-                    # # This does the search and gives us back a search ID (number)
-                    # # which we can then use to fetch the result data structure
-                    # dc_string = ",".join(["DC="+x for x in server_conf["server"]["ldap"].split(".")])
-                    # res = conn.search(dc_string,ldap.SCOPE_SUBTREE, filter, search_attribute)
-                    # answer = conn.result(res,0)
-
-                    # # We can then pull the relevant fields from the results
-                    # name = answer[1][0][1]["distinguishedName"][0].decode("utf8").split(",")[0].replace("CN=","")
-                    # email = answer[1][0][1]["mail"][0].decode("utf8")
-
-                    # make_new_person(people, username, name, email)
-
-                # We can assign the new sessioncode to them and then return it
                 people.update_one({"username":username},{"$set":{"sessioncode": sessioncode}})
 
                 response = make_response(sessioncode)
@@ -157,12 +218,6 @@ def construct_bp(people, projects, ips):
             ips.update_one({"ip":request.remote_addr},{"$push":{"failed_logins":int(time.time())}})
 
             raise Exception("Incorrect Username/Password from LDAP")
-
-    # bp = Blueprint('logout', __name__)
-    # @bp.route("/logout")
-    # def logout():
-    #     # session.pop("user_id", None)
-    #     return redirect(url_for("pages.login"))
 
     @bp.route("/validate_session", methods = ['POST', 'GET'])
     def validate_session():

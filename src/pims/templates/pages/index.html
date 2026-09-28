@@ -1,4 +1,18 @@
 {% extends "base.html" %}
+
+{% block buttons %}
+    <a href="{{ url_for('index.index')}}" class="btn btn-primary" role="button">Home</a>
+    <a href="{{ url_for('pages.search')}}" class="btn btn-primary" role="button">Search</a>
+    {% if person['is_admin'] %}
+    <!--  if person is not None and person.get('is_admin') -->
+    <a href="{{ url_for('pages.editproject')}}" class="btn btn-warning mt-3" role="buttoon">New Project</a>
+    <a href="{{ url_for('pages.reports')}}"  class="btn btn-warning mb-3" role="button">Reports</a>
+    {% endif %}
+    <a href="{{ url_for('pages.account')}}"  class="btn btn-primary" role="button">Account</a>
+    <!-- <button class="btn btn-danger" id="logout">Log Out</button> -->
+    <a href="{{ url_for('login.logout') }}" class="btn btn-danger" role="button">Log Out</a>
+{% endblock %}
+
 {% block content %}
 
 <div class="row text-center"> 

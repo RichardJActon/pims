@@ -22,21 +22,13 @@
               <img src="{{ url_for('static', filename='images/pims_logo_path_notext.svg') }}"  width=60% style="margin-left: auto; margin-right: auto;">
             </div>
             <div class="d-grid gap-2">
-              <a href="{{ url_for('.index')}}" class="btn btn-primary" role="button">Home</a>
-              <a href="{{ url_for('pages.search')}}" class="btn btn-primary" role="button">Search</a>
-              {% if person['is_admin'] %}
-              <a href="{{ url_for('pages.editproject')}}" class="btn btn-warning mt-3" role="buttoon">New Project</a>
-              <a href="{{ url_for('pages.reports')}}"  class="btn btn-warning mb-3" role="button">Reports</a>
-              {% endif %}
-              <a href="{{ url_for('pages.account')}}"  class="btn btn-primary" role="button">Account</a>
-              <button class="btn btn-danger" id="logout">Log Out</button>
+              {% block buttons %} {% endblock %}
             </div>
           </div>
           <div class="col-md-10">
             <div class="row text-center">
               <h2>PIMS Proteomics LIMS System</h2>
             </div>
-      
             {% block content %}{% endblock %}
           </div>
         </div>

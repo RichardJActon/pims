@@ -1,7 +1,14 @@
 from flask import request, current_app
 import random
 from pims.utility import args_to_dict
+# from pims.logging_utils import app_exception_logging
 import ldap # move to ldap3? - better docs # move to ldap3? - better docs
+import time
+import typing
+from typing import (
+    Dict,
+    Any,
+)
 
 def get_form():
     # In addition to the main arguments we also add the session
@@ -21,26 +28,34 @@ def get_form():
         form["session"] = session
         return form
 
-def checksession (sessioncode, people):
+# @app_exception_logging
+def checksession (sessioncode: str, people) -> Dict[str, Any]:
     """
     Validates a session code and retrieves a person document
 
-    @sessioncode : The session code from the browser cookie
+    :param sessioncode: The session code from the browser cookie
 
-    @returns:      The document for the person associated with this session
+    :return: The document for the person associated with this session
     """
-
+    
     person = people.find_one({"sessioncode":sessioncode})
+    try:
+        if person is None:
+            raise Exception("ERROR| Person not found for this session")
+    except Exception as e:
+        current_app.logger.exception(e)
 
     try:
         if "disabled" in person and person["disabled"]:
-            raise Exception("Account disabled")
+            raise Exception("ERROR| Account disabled")
     except Exception as e:
         current_app.logger.exception(str(e))
-        
-    # if "disabled" in person and person["disabled"]:
-    #     raise Exception("Account disabled")
 
+    # if person:
+    #     return person
+    # else:
+    #     raise Exception("Couldn't validate session")
+        
     try:
         if person:
             return person
@@ -63,14 +78,15 @@ def getadminuser(people):
 
     return person
 
-def generate_id(size):
+def generate_id(size: int) -> str:
     """
     Generic function used for creating IDs.  Makes random IDs
     just using uppercase letters
 
-    @size:    The length of ID to generate
-
-    @returns: A random ID of the requested size
+    :param size:    The length of ID to generate
+    :size type: int
+    :return: A random ID of the requested size
+    :rtype: str
     """
     letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     code = ""
@@ -85,6 +101,13 @@ def make_new_person(
     email: str = ""
 ):
     """
+    Make a new person in mongoDB.
+    
+    When making an entry to track unauthenticated login attempts to block
+    IPs that make repeated login attempts fills in name with username and
+    a <username>@example.com email address.
+    This is done when name and email are not provided.
+    
     :param people:
     :param username:
     :type username: str
@@ -136,3 +159,49 @@ def new_person_from_ldap(people, username, server_conf, conn):
     email = answer[1][0][1]["mail"][0].decode("utf8")
 
     make_new_person(people, username, name, email)
+
+# We might not try the authentication for a couple of reasons
+# 
+# 1. We might have blocked this IP for too many failed logins
+# 2. We might have locked this account for too many failed logins
+
+# Calculate when any timeout ban would have to have started so that
+# it's expired now
+#
+def ip_lockout(people, username, ips, lockout_time_mins: int, failed_logins_per_ip: int) -> None:
+    # Calculate when any timeout ban would have to have started so that
+    # it's expired now
+    # !! make lockout time configurable? !!
+    timeout_time = int(time.time()) - (60 * lockout_time_mins)
+    ip = ips.find_one({"ip":request.remote_addr})
+    failed_logins = ip["failed_logins"]
+    
+    if failed_logins >= failed_logins_per_ip:
+        # Find if they've served the timeout
+        last_time = ip["failed_logins"][-1]
+
+        try:
+            if last_time < timeout_time:
+                # They've served their time so remove the records of failures
+                ips.update_one({"ip":request.remote_addr},{"$set":{"failed_logins":[]}})
+                # 
+            else:
+                raise Exception("IP block timeout")
+        except Exception as e:
+            current_app.logger.exception(e)
+            
+        # See if we have a record of failed logins for this user
+        person = people.find_one({"username":username})
+    try:
+        if person and person["locked_at"]:
+            if person["locked_at"] > timeout_time:
+                # Their account is locked
+                raise Exception("User account locked")
+            else:
+                # They've served their time, so remove the lock
+                # and failed logins
+                people.update_one({"username":username},{"$set":{"locked_at":0}})
+                people.update_one({"username":username},{"$set":{"failed_logins":[]}})
+    except Exception as e:
+        current_app.logger.exception(e)
+

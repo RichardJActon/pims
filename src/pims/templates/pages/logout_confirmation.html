@@ -3,12 +3,8 @@
 <div class="container">
 	<div class="row justify-content-center" style="height: 100vh;">
 		<div class="col-sm-4 align-self-center border text-center">
-			<p>Choose and Oauth Provider</p>
-			{% for e in oauth_endpoints %}
-			<a href="{{ url_for('login.login') }}" class="btn btn-info" role="button">
-				{{ e }}
-			</a>
-			{% endfor%}
+			<p>You Have Sucessfully Logged Out</p>
+			<a href="{{ url_for('login.login') }}" class="btn btn-info" role="button">Login</a>
 			<p></p>
 		</div>
 	</div>

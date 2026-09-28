@@ -1,9 +1,11 @@
 # index
+from pims.auth import requires_auth
 from flask import (
     Blueprint,
     redirect,
     url_for,
-    render_template
+    render_template,
+    session,
 ) 
 from pims.session import *
 
@@ -12,13 +14,15 @@ def construct_bp(people, projects):
     bp = Blueprint('index', __name__)
 
     @bp.route("/")
+    @requires_auth
     def index():
-        try:
-            # global people
-            person = getnormaluser(people)
-        except Exception:
-            return redirect(url_for("login.login"))
+        # try:
+        #     # global people
+        #     person = getnormaluser(people)
+        # except Exception:
+        #     return redirect(url_for("login.login"))
     
+        person = people.find_one({"username": session["user"]["preferred_username"]})
         # Get recent projects]
         recent_projects = []
         # global projects

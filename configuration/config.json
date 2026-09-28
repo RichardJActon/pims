@@ -13,6 +13,14 @@
         "failed_logins_per_ip": 20,
         "failed_logins_per_user": 5,
         "lockout_time_mins": 15
+    },
+    "OAUTH_ENDPOINTS": {
+        "testing": {
+            "client_id": "pims-dev",
+            "server_metadata_url": "http://localhost:8080/realms/testrealm/.well-known/openid-configuration",
+            "client_kwargs": {
+                "scope": "openid profile email"
+            }
+        }
     }
-   
 }
