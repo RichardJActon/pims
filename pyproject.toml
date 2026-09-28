@@ -26,3 +26,7 @@ addopts = [
     "--ignore data",
     "--ignore database"
 ]
+
+[tool.jinja-lsp]
+templates = "./templates"
+backend = ["./src"]
