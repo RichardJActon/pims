@@ -15,7 +15,7 @@ import logging
 from pathlib import Path
 from authlib.integrations.flask_client import OAuth
 from pprint import pprint
-from pims.logging_utils import exception_logging
+# from pims.logging_utils import exception_logging
 
 def create_app():
     app = Flask(__name__)
