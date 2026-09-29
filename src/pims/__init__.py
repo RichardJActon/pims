@@ -61,7 +61,7 @@ def create_app():
     #     client_kwargs = {"scope": "openid email profile"}
     # )
     auth.register_oauth_endpoints(oauth, app.config["OAUTH_ENDPOINTS"])
-    oauth_endpoints = [*app.config["OAUTH_ENDPOINTS"]]
+    oauth_providers = [*app.config["OAUTH_ENDPOINTS"]]
     
     # Connect to the database
     dbc = db.connect_to_database(app.config["MONGO"])
@@ -73,7 +73,7 @@ def create_app():
 
     # Blueprint constructors
     app.register_blueprint(index.construct_bp(people, projects))
-    app.register_blueprint(login.construct_bp(people, projects, ips, oauth))
+    app.register_blueprint(login.construct_bp(people, projects, ips, oauth, oauth_providers))
     app.register_blueprint(pages.construct_bp(people, projects))
     
     # app.register_blueprint(pages.bp)

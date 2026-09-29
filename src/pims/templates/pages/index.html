@@ -1,66 +1,65 @@
 {% extends "base.html" %}
 
 {% block buttons %}
-    <a href="{{ url_for('index.index')}}" class="btn btn-primary" role="button">Home</a>
-    <a href="{{ url_for('pages.search')}}" class="btn btn-primary" role="button">Search</a>
-    {% if person['is_admin'] %}
-    <!--  if person is not None and person.get('is_admin') -->
-    <a href="{{ url_for('pages.editproject')}}" class="btn btn-warning mt-3" role="buttoon">New Project</a>
-    <a href="{{ url_for('pages.reports')}}"  class="btn btn-warning mb-3" role="button">Reports</a>
-    {% endif %}
-    <a href="{{ url_for('pages.account')}}"  class="btn btn-primary" role="button">Account</a>
-    <!-- <button class="btn btn-danger" id="logout">Log Out</button> -->
-    <a href="{{ url_for('login.logout') }}" class="btn btn-danger" role="button">Log Out</a>
+<a href="{{ url_for('index.index')}}" class="btn btn-primary" role="button">Home</a>
+<a href="{{ url_for('pages.search')}}" class="btn btn-primary" role="button">Search</a>
+{% if person['is_admin'] %}
+<!--  if person is not None and person.get('is_admin') -->
+<a href="{{ url_for('pages.editproject')}}" class="btn btn-warning mt-3" role="buttoon">New Project</a>
+<a href="{{ url_for('pages.reports')}}" class="btn btn-warning mb-3" role="button">Reports</a>
+{% endif %}
+<a href="{{ url_for('pages.account')}}" class="btn btn-primary" role="button">Account</a>
+<!-- <button class="btn btn-danger" id="logout">Log Out</button> -->
+<a href="{{ url_for('login.logout') }}" class="btn btn-danger" role="button">Log Out</a>
 {% endblock %}
 
 {% block content %}
 
-<div class="row text-center"> 
-  <div>
-    <img src="{{ url_for('static', filename='images/pims_logo_path.svg') }}" width="400px">
-  </div>
+<div class="row text-center">
+	<div>
+		<img src="{{ url_for('static', filename='images/pims_logo_path.svg') }}" width="400px">
+	</div>
 </div>
 
 <div class="row">
-  <p>
-    This is the PIMS proteomics LIMS system.  Here you can see your existing projects and results, and can share these with others.
-  </p>
-  <p>
-    To start a new project you must first contact the proteomics facility to discuss the work and get them to create a project for you.  Once created you can then add samples and see results once they start to appear.
-  </p>
+	<p>
+		This is the PIMS proteomics LIMS system.  Here you can see your existing projects and results, and can share these with others.
+	</p>
+	<p>
+		To start a new project you must first contact the proteomics facility to discuss the work and get them to create a project for you.  Once created you can then add samples and see results once they start to appear.
+	</p>
 </div>
 <div class="row">
-  <h2>Recent Projects</h2>
+	<h2>Recent Projects</h2>
 </div>
 
-
 <div class="row">
-  <table class="table">
-    <thead class="thead-dark">
-      <tr>
-        <th scope="col">ID</th>
-        <th scope="col">Title</th>
-        <th scope="col">Date</th>
-        <th scope="col">Status</th>
-        <th scope="col">Open</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% if projects %}
-      {% else %}
-      <tr><td colspan=5 class="text-center">No recent projects</td></tr>
-      {% endif %}
-    {% for project in projects %}
-    <tr>
-      <td>{{ project.project_id }}</td>
-      <td>{{ project.title }}</td>
-      <td>{{ project.date_created }}</td>
-      <td>{{ project.status }}</td>
-      <td><a href="/project/{{ project.project_id }}" role="button" class="btn btn-success">Open</a></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+	<table class="table">
+		<thead class="thead-dark">
+			<tr>
+				<th scope="col">ID</th>
+				<th scope="col">Title</th>
+				<th scope="col">Date</th>
+				<th scope="col">Status</th>
+				<th scope="col">Open</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% if projects %}
+			{% else %}
+			<tr><td colspan=5 class="text-center">No recent projects</td></tr>
+			{% endif %}
+			{% for project in projects %}
+			<tr>
+				<td>{{ project.project_id }}</td>
+				<td>{{ project.title }}</td>
+				<td>{{ project.date_created }}</td>
+				<td>{{ project.status }}</td>
+				<td><a href="/project/{{ project.project_id }}" role="button" class="btn btn-success">Open</a></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 </div>
 
 {% endblock %}

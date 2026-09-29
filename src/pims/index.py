@@ -23,7 +23,7 @@ def construct_bp(people, projects):
         #     return redirect(url_for("login.login"))
     
         person = people.find_one({"username": session["user"]["preferred_username"]})
-        # Get recent projects]
+        # Get recent projects
         recent_projects = []
         # global projects
         for project in projects.find({"owner":person["_id"]}).sort("date_created",-1).limit(10):

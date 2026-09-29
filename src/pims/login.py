@@ -16,18 +16,23 @@ from datetime import datetime
 import time
 import ldap # move to ldap3? - better docs # move to ldap3? - better docs
 
-def construct_bp(people, projects, ips, oauth):
-    
+def construct_bp(people, projects, ips, oauth, oauth_providers):
     bp = Blueprint('login', __name__) 
+    
     @bp.route('/login')
     def login():
-        redirect_uri = url_for('login.authorize', _external=True)
-        return oauth.testing.authorize_redirect(redirect_uri)
-        # return render_template("pages/login.html")
+        return render_template("pages/login.html", oauth_providers = oauth_providers)
 
-    @bp.route('/authorize')# , methods = ['POST', 'GET'])
-    def authorize():
-        token = oauth.testing.authorize_access_token()
+    @bp.route('/oauth_login/<oauth_provider>')
+    def oauth_login(oauth_provider):
+        redirect_uri = url_for('login.authorize', oauth_provider = oauth_provider, _external=True)
+        # redirect_uri = url_for('login.authorize/<oauth_provider>', _external=True)
+        # redirect_uri = url_for('login.authorize', _external=True)
+        return oauth.__getattr__(oauth_provider).authorize_redirect(redirect_uri)
+
+    @bp.route('/authorize/<oauth_provider>')# , methods = ['POST', 'GET'])
+    def authorize(oauth_provider):
+        token = oauth.__getattr__(oauth_provider).authorize_access_token()
         # resp = oauth.testing.get('user')
         userinfo = token.get('userinfo')
         current_app.logger.info(
@@ -61,6 +66,7 @@ def construct_bp(people, projects, ips, oauth):
             else:
                 session["user"] = userinfo
                 session["id_token"] = token.get("id_token")
+                session["oauth_provider"] = oauth_provider
         except Exception as e:
             current_app.logger.info(str(e))
         
@@ -80,144 +86,104 @@ def construct_bp(people, projects, ips, oauth):
         id_token = session.pop("id_token", None)
         redirect_uri = url_for('login.logged_out', _external=True)
         # redirect_uri = url_for('login.login', _external=True)
-        return oauth.testing.logout_redirect(
+        return oauth.__getattr__(session.get("oauth_provider")).logout_redirect(
             post_logout_redirect_uri = redirect_uri,
             id_token_hint = id_token
         )
 
     @bp.route('/logged_out')
     def logged_out():
-        state_data = oauth.testing.validate_logout_response()
+        state_data = oauth.__getattr__(session["oauth_provider"]).validate_logout_response()
         session.pop("user", None)
         return render_template("pages/logout_confirmation.html")
         # return 'You have been logged out.'
 
-    @bp.route("/processlogin", methods = ['POST', 'GET'])
-    def process_login():
-        """
-        Validates an username / password combination and generates
-        a session id to authenticate them in future
+    # @bp.route("/processlogin", methods = ['POST', 'GET'])
+    # def process_login():
+    #     """
+    #     Validates an username / password combination and generates
+    #     a session id to authenticate them in future
 
-        :param username: Their BI username
-        :param password: The unhashed version of their password
+    #     :param username: Their BI username
+    #     :param password: The unhashed version of their password
 
-        :return: Forwards the session code to the json response
-        """
-        form = get_form()
-        username = form["username"]
-        password = form["password"]
+    #     :return: Forwards the session code to the json response
+    #     """
+    #     form = get_form()
+    #     username = form["username"]
+    #     password = form["password"]
 
-        testing_no_auth = True
-        if testing_no_auth:
+    #     testing_no_auth = True
+    #     if testing_no_auth:
             
-            sessioncode = generate_id(20)
-            response = make_response(sessioncode)
-            response.set_cookie("pims_session_id",sessioncode)
+    #         sessioncode = generate_id(20)
+    #         response = make_response(sessioncode)
+    #         response.set_cookie("pims_session_id",sessioncode)
             
-            person = people.find_one({"username":username})
-            if not person:
-                current_app.logger.info("NOT PERSON - MAKING NEW!")
-                # print("NOT PERSON - MAKING NEW!")
-                # Now we can make the database entry for them
-                # creating new DB entries for unauthenticated users is a
-                # potential DOS vector, rate limit?
-                # clean old entries with no sucessfull logins? - time since last failed login
-                make_new_person(people, username)
-                # name  = username
-                # email = username + "@example.com"
+    #         person = people.find_one({"username":username})
+    #         if not person:
+    #             current_app.logger.info("NOT PERSON - MAKING NEW!")
+    #             # print("NOT PERSON - MAKING NEW!")
+    #             # Now we can make the database entry for them
+    #             # creating new DB entries for unauthenticated users is a
+    #             # potential DOS vector, rate limit?
+    #             # clean old entries with no sucessfull logins? - time since last failed login
+    #             make_new_person(people, username)
+    #             # name  = username
+    #             # email = username + "@example.com"
 
-            people.update_one({"username":username},{"$set":{"sessioncode": sessioncode}})
-            return(response)
-        else: 
-            # We might not try the authentication for a couple of reasons
-            # 
-            # 1. We might have blocked this IP for too many failed logins
-            # 2. We might have locked this account for too many failed logins
-
-            # Calculate when any timeout ban would have to have started so that
-            # it's expired now
-            #
-            ip_lockout(
-                people, username, ips,
-                server_conf["security"]["lockout_time_mins"],
-                server_conf["security"]["failed_logins_per_ip"]
-            )
+    #         people.update_one({"username":username},{"$set":{"sessioncode": sessioncode}})
+    #         return(response)
+    #     else: 
+    #         ip_lockout(
+    #             people, username, ips,
+    #             server_conf["security"]["lockout_time_mins"],
+    #             server_conf["security"]["failed_logins_per_ip"]
+    #         )
             
-            # !! server_conf ?
-            # timeout_time = int(time.time())-(60*(int(server_conf["security"]["lockout_time_mins"])))
 
+    #         # Check the password against AD
+    #         conn = ldap.initialize("ldap://"+server_conf["server"]["ldap"])
+    #         conn.set_option(ldap.OPT_REFERRALS, 0)
 
-            # # We'll check the IP first
-            # ip = ips.find_one({"ip":request.remote_addr})
+    #         # bypass auth
+    #         response = make_response(sessioncode)
+    #         response.set_cookie("pims_session_id",sessioncode)
+    #         return(response)
+
+    #         try:    
+    #             conn.simple_bind_s(username+"@"+server_conf["server"]["ldap"], password)
+
+    #             # Clear any IP recorded login fails
+    #             ips.delete_one({"ip":request.remote_addr})
+
+    #             sessioncode = generate_id(20)
+
+    #             if not person:
+    #                 new_person_from_ldap(people, username, server_conf, conn)
+
+    #             people.update_one({"username":username},{"$set":{"sessioncode": sessioncode}})
+
+    #             response = make_response(sessioncode)
+    #             response.set_cookie("pims_session_id",sessioncode)
+    #             return(response)
     
-            # if ip and len(ip["failed_logins"])>=server_conf["security"]["failed_logins_per_ip"]:
-            #     # Find if they've served the timeout
-            #     last_time = ip["failed_logins"][-1]
-
-            #     if last_time < timeout_time:
-            #         # They've served their time so remove the records of failures
-            #         ips.update_one({"ip":request.remote_addr},{"$set":{"failed_logins":[]}})
-
-            #     else:
-            #         raise Exception("IP block timeout")
-
-            # # See if we have a record of failed logins for this user
-            # person = people.find_one({"username":username})
-
-            # if person and person["locked_at"]:
-            #     if person["locked_at"] > timeout_time:
-            #         # Their account is locked
-            #         raise Exception("User account locked")
-            #     else:
-            #         # They've served their time, so remove the lock
-            #         # and failed logins
-            #         people.update_one({"username":username},{"$set":{"locked_at":0}})
-            #         people.update_one({"username":username},{"$set":{"failed_logins":[]}})
-
-
-            # Check the password against AD
-            conn = ldap.initialize("ldap://"+server_conf["server"]["ldap"])
-            conn.set_option(ldap.OPT_REFERRALS, 0)
-
-            # bypass auth
-            response = make_response(sessioncode)
-            response.set_cookie("pims_session_id",sessioncode)
-            return(response)
-
-            try:    
-                conn.simple_bind_s(username+"@"+server_conf["server"]["ldap"], password)
-
-                # Clear any IP recorded login fails
-                ips.delete_one({"ip":request.remote_addr})
-
-                sessioncode = generate_id(20)
-
-                if not person:
-                    new_person_from_ldap(people, username, server_conf, conn)
-
-                people.update_one({"username":username},{"$set":{"sessioncode": sessioncode}})
-
-                response = make_response(sessioncode)
-                response.set_cookie("pims_session_id",sessioncode)
-                return(response)
-    
-            except ldap.INVALID_CREDENTIALS:
-                # We need to record this failure.  If there is a user with this name we record
-                # against that.  If not then we just record against the IP
-                if person:
-                    people.update_one({"username":username},{"$push":{"failed_logins":int(time.time())}})
-                    if len(person["failed_logins"])+1 >= server_conf["security"]["failed_logins_per_user"]:
-                        # We need to lock their account
-                        people.update_one({"username":username},{"$set":{"locked_at":int(time.time())}})
+    #         except ldap.INVALID_CREDENTIALS:
+    #             # We need to record this failure.  If there is a user with this name we record
+    #             # against that.  If not then we just record against the IP
+    #             if person:
+    #                 people.update_one({"username":username},{"$push":{"failed_logins":int(time.time())}})
+    #                 if len(person["failed_logins"])+1 >= server_conf["security"]["failed_logins_per_user"]:
+    #                     # We need to lock their account
+    #                     people.update_one({"username":username},{"$set":{"locked_at":int(time.time())}})
                 
 
+    #         if not ip:
+    #             ips.insert_one({"ip":request.remote_addr,"failed_logins":[]})
 
-            if not ip:
-                ips.insert_one({"ip":request.remote_addr,"failed_logins":[]})
+    #         ips.update_one({"ip":request.remote_addr},{"$push":{"failed_logins":int(time.time())}})
 
-            ips.update_one({"ip":request.remote_addr},{"$push":{"failed_logins":int(time.time())}})
-
-            raise Exception("Incorrect Username/Password from LDAP")
+    #         raise Exception("Incorrect Username/Password from LDAP")
 
     @bp.route("/validate_session", methods = ['POST', 'GET'])
     def validate_session():
