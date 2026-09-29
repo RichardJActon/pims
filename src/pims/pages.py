@@ -13,7 +13,10 @@ from urllib.parse import quote_plus
 from pymongo import MongoClient
 from pathlib import Path
 import json
-import datetime
+from datetime import (
+    datetime,
+    timezone,
+) 
 
 from flask import Blueprint
 from pims.login import *
@@ -35,13 +38,8 @@ from pims.session import (
 def construct_bp(people, projects):
     bp = Blueprint("pages", __name__)
 
-    # app.register_blueprint(index_page)
-    # app.register_blueprint(loginb)
-    # app.register_blueprint(process_loginb)
-    # app.register_blueprint(validate_sessionb)
-    # app.register_blueprint(get_user_datab)
-
     @bp.route("/project/<project_id>")
+    @requires_auth
     def project(project_id):
 
         project_id = int(project_id)
@@ -65,7 +63,7 @@ def construct_bp(people, projects):
         owner = people.find_one({"_id": project["owner"]})
         project["owner"] = owner["name"]
 
-        return render_template("project.html",person=person, project=project)
+        return render_template("pages/project.html",person=person, project=project)
 
 
 
@@ -79,6 +77,7 @@ def construct_bp(people, projects):
 
     @bp.route("/editproject",defaults={"project_id":None})
     @bp.route("/editproject/<project_id>")
+    @requires_auth
     def editproject(project_id):
         try:
             person = getnormaluser(people)
@@ -105,7 +104,7 @@ def construct_bp(people, projects):
                 raise Exception("You don't have permission to edit this project")
 
 
-        return render_template("edit_project.html",project=project, person=person)
+        return render_template("pages/edit_project.html",project=project, person=person)
 
     def can_person_see_project(person,project):
         if person["is_admin"]:
@@ -128,6 +127,7 @@ def construct_bp(people, projects):
         return False
 
     @bp.route("/saveproject", methods = ['POST', 'GET'])
+    @requires_auth
     def saveproject():
         "Create a new project or update an existing one"
 
@@ -153,7 +153,7 @@ def construct_bp(people, projects):
                 "owner": owner,
                 "title": form["title"],
                 "description": form["description"],
-                "date_created": datetime.datetime.now(tz=datetime.timezone.utc),
+                "date_created": datetime.now(tz=timezone.utc),
                 "status": "proposed",
                 "samples":[],
                 "tags":form["tags"],
@@ -198,6 +198,7 @@ def construct_bp(people, projects):
 
 
     @bp.route("/deletesample", methods = ['POST', 'GET'])
+    @requires_auth
     def deletesample():
         "Deletes a sample"
 
@@ -221,6 +222,7 @@ def construct_bp(people, projects):
 
 
     @bp.route("/savesample", methods = ['POST', 'GET'])
+    @requires_auth
     def savesample():
         "Create a new sample or update an existing one"
 

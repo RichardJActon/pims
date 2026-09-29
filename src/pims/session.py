@@ -1,4 +1,4 @@
-from flask import request, current_app
+from flask import request, current_app, session
 import random
 from pims.utility import args_to_dict
 # from pims.logging_utils import app_exception_logging
@@ -64,14 +64,20 @@ def checksession (sessioncode: str, people) -> Dict[str, Any]:
     # Exception("Couldn't validate session")
 
 def getnormaluser(people):
-    form = get_form()
-    person = checksession(form["session"], people)
+    # form = get_form()
+    # person = checksession(form["session"], people)
+    
+    user_query = {"username": session["user"]["preferred_username"]}
+    person = people.find_one(user_query)
 
     return person
 
 def getadminuser(people):
-    form = get_form()
-    person = checksession(form["session"], people)
+    # form = get_form()
+    # person = checksession(form["session"], people)
+
+    user_query = {"username": session["user"]["preferred_username"]}
+    person = people.find_one(user_query)
 
     if not person["is_admin"]:
         raise Exception("Not and admin")
