@@ -9,7 +9,8 @@
     <a href="{{ url_for('pages.reports')}}"  class="btn btn-warning mb-3" role="button">Reports</a>
     {% endif %}
     <a href="{{ url_for('pages.account')}}"  class="btn btn-primary" role="button">Account</a>
-    <button class="btn btn-danger" id="logout">Log Out</button>
+    <!--- <button class="btn btn-danger" id="logout">Log Out</button> --->
+    <a href="{{ url_for('login.logout') }}" class="btn btn-danger" role="button">Log Out</a>
 {% endblock %}
 
 {% block content %}
@@ -24,7 +25,7 @@
 </div>
 
 <div class="row">
-    <pre>{{ project.description }}</pre>
+    <pre>{{ project_description|safe }}</pre>
 </div>
 
 <div class="row">

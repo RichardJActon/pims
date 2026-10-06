@@ -30,6 +30,8 @@ from pims.session import (
     getadminuser,
     get_form,
 )
+from markdown import markdown
+from justhtml import JustHTML
 
 # from index import index_page
 # from login import loginb, process_loginb, validate_sessionb, get_user_datab
@@ -59,11 +61,18 @@ def construct_bp(people, projects):
         if not can_person_see_project(person,project):
             raise Exception("Not allowed to view this project")
 
+        project_description_raw = markdown(project.get("description"))
+        project_description = JustHTML(project_description_raw, fragment = True).to_html()
+
         # We want to swap the owner on the project for the owner name
         owner = people.find_one({"_id": project["owner"]})
         project["owner"] = owner["name"]
 
-        return render_template("pages/project.html",person=person, project=project)
+        return render_template(
+            "pages/project.html",
+            person = person, project = project,
+            project_description = project_description
+        )
 
 
 
@@ -73,7 +82,11 @@ def construct_bp(people, projects):
 
     @bp.route("/account")
     def account():
-        pass
+        user = session.get("user")
+        person = getnormaluser(people)
+        n_projects = projects.count_documents({"owner": person.get("_id")})
+        return render_template("pages/account.html",person = person, user = user, n_projects = n_projects)
+        # pass
 
     @bp.route("/editproject",defaults={"project_id":None})
     @bp.route("/editproject/<project_id>")

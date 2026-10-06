@@ -80,5 +80,7 @@
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for('static', filename='js/edit_project.js') }}"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<script src="{{ url_for('static', filename='js/edit_project.js') }}"></script>
 {% endblock %}

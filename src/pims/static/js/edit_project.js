@@ -7,6 +7,7 @@ $( document ).ready(function() {
 
 })
 
+const easyMDE = new EasyMDE({element: document.getElementById("project_description")})
 
 function remove_tag() {
     $(this).parent().remove()
@@ -76,7 +77,8 @@ function saveproject() {
         return
     }
 
-    let project_description = $("#project_description").val()
+    // let project_description = $("#project_description").val()
+    let project_description = easyMDE.value()
 
     // Error if not
     if (! project_description) {
