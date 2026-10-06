@@ -156,72 +156,76 @@ def make_new_person(
     except:
         current_app.logger.exception("Failed to create new person!")
 
-def new_person_from_ldap(people, username, server_conf, conn):
-    # We're making a new person.  We can therefore query AD
-    # to get their proper name and email.
 
-    # We can theoretically look anyone up, but this filter says
-    # that we're only interested in the person who logged in
-    filter = f"(&(sAMAccountName={username}))"
 
-    # The values we want to retrive are their real name (not 
-    # split by first and last) and their email
-    search_attribute = ["distinguishedName","mail"]
+# def new_person_from_ldap(people, username, server_conf, conn):
+#     # We're making a new person.  We can therefore query AD
+#     # to get their proper name and email.
+#     # We can theoretically look anyone up, but this filter says
+#     # that we're only interested in the person who logged in
+#     filter = f"(&(sAMAccountName={username}))"
 
-    # This does the search and gives us back a search ID (number)
-    # which we can then use to fetch the result data structure
-    dc_string = ",".join(["DC="+x for x in server_conf["server"]["ldap"].split(".")])
-    res = conn.search(dc_string,ldap.SCOPE_SUBTREE, filter, search_attribute)
-    answer = conn.result(res,0)
+#     # The values we want to retrive are their real name (not 
+#     # split by first and last) and their email
+#     search_attribute = ["distinguishedName","mail"]
 
-    # We can then pull the relevant fields from the results
-    name = answer[1][0][1]["distinguishedName"][0].decode("utf8").split(",")[0].replace("CN=","")
-    email = answer[1][0][1]["mail"][0].decode("utf8")
+#     # This does the search and gives us back a search ID (number)
+#     # which we can then use to fetch the result data structure
+#     dc_string = ",".join(["DC="+x for x in server_conf["server"]["ldap"].split(".")])
+#     res = conn.search(dc_string,ldap.SCOPE_SUBTREE, filter, search_attribute)
+#     answer = conn.result(res,0)
 
-    make_new_person(people, username, name, email)
+#     # We can then pull the relevant fields from the results
+#     name = answer[1][0][1]["distinguishedName"][0].decode("utf8").split(",")[0].replace("CN=","")
+#     email = answer[1][0][1]["mail"][0].decode("utf8")
+
+#     make_new_person(people, username, name, email)
+
+
+
 
 # We might not try the authentication for a couple of reasons
 # 
 # 1. We might have blocked this IP for too many failed logins
 # 2. We might have locked this account for too many failed logins
-
+# 
 # Calculate when any timeout ban would have to have started so that
 # it's expired now
 #
-def ip_lockout(people, username, ips, lockout_time_mins: int, failed_logins_per_ip: int) -> None:
-    # Calculate when any timeout ban would have to have started so that
-    # it's expired now
-    # !! make lockout time configurable? !!
-    timeout_time = int(time.time()) - (60 * lockout_time_mins)
-    ip = ips.find_one({"ip":request.remote_addr})
-    failed_logins = ip["failed_logins"]
+# def ip_lockout(people, username, ips, lockout_time_mins: int, failed_logins_per_ip: int) -> None:
+#     # Calculate when any timeout ban would have to have started so that
+#     # it's expired now
+#     # !! make lockout time configurable? !!
+#     timeout_time = int(time.time()) - (60 * lockout_time_mins)
+#     ip = ips.find_one({"ip":request.remote_addr})
+#     failed_logins = ip["failed_logins"]
     
-    if failed_logins >= failed_logins_per_ip:
-        # Find if they've served the timeout
-        last_time = ip["failed_logins"][-1]
+#     if failed_logins >= failed_logins_per_ip:
+#         # Find if they've served the timeout
+#         last_time = ip["failed_logins"][-1]
 
-        try:
-            if last_time < timeout_time:
-                # They've served their time so remove the records of failures
-                ips.update_one({"ip":request.remote_addr},{"$set":{"failed_logins":[]}})
-                # 
-            else:
-                raise Exception("IP block timeout")
-        except Exception as e:
-            current_app.logger.exception(e)
+#         try:
+#             if last_time < timeout_time:
+#                 # They've served their time so remove the records of failures
+#                 ips.update_one({"ip":request.remote_addr},{"$set":{"failed_logins":[]}})
+#                 # 
+#             else:
+#                 raise Exception("IP block timeout")
+#         except Exception as e:
+#             current_app.logger.exception(e)
             
-        # See if we have a record of failed logins for this user
-        person = people.find_one({"username":username})
-    try:
-        if person and person["locked_at"]:
-            if person["locked_at"] > timeout_time:
-                # Their account is locked
-                raise Exception("User account locked")
-            else:
-                # They've served their time, so remove the lock
-                # and failed logins
-                people.update_one({"username":username},{"$set":{"locked_at":0}})
-                people.update_one({"username":username},{"$set":{"failed_logins":[]}})
-    except Exception as e:
-        current_app.logger.exception(e)
+#         # See if we have a record of failed logins for this user
+#         person = people.find_one({"username":username})
+#     try:
+#         if person and person["locked_at"]:
+#             if person["locked_at"] > timeout_time:
+#                 # Their account is locked
+#                 raise Exception("User account locked")
+#             else:
+#                 # They've served their time, so remove the lock
+#                 # and failed logins
+#                 people.update_one({"username":username},{"$set":{"locked_at":0}})
+#                 people.update_one({"username":username},{"$set":{"failed_logins":[]}})
+#     except Exception as e:
+#         current_app.logger.exception(e)
 
