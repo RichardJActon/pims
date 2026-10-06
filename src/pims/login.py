@@ -35,8 +35,9 @@ def construct_bp(people, projects, oauth, oauth_providers):
         userinfo = token.get('userinfo')
         current_app.logger.info(
             "User: " + userinfo.get('preferred_username') +
-            " logged in, Authorised at: " +
-            str(datetime.fromtimestamp(userinfo.get('auth_time')))
+            " logged in at: "+ datetime.now(tz = timezone.utc).strftime('%Y-%m-%d %H:%M:%S') +
+            ", Last authorised at: " +
+            datetime.fromtimestamp(userinfo.get('auth_time')).strftime('%Y-%m-%d %H:%M:%S')
         )
         # resp = oauth.testing.get('user')
         # resp.raise_for_status()
