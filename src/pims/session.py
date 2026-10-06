@@ -9,6 +9,10 @@ from typing import (
     Dict,
     Any,
 )
+from datetime import (
+    datetime,
+    timezone,
+)
 
 def get_form():
     # In addition to the main arguments we also add the session
@@ -102,9 +106,10 @@ def generate_id(size: int) -> str:
 
 def make_new_person(
     people,
-    username: str,
-    name: str = "",
-    email: str = ""
+    userinfo
+    # username: str,
+    # name: str = "",
+    # email: str = ""
 ):
     """
     Make a new person in mongoDB.
@@ -114,16 +119,22 @@ def make_new_person(
     a <username>@example.com email address.
     This is done when name and email are not provided.
     
-    :param people:
-    :param username:
-    :type username: str
-    :param name:
-    :type name: str
-    :param email:
-    :type email: str
+    :param people: MongoDB people collection object
+    :param userinfo: user information from the Oauth/OIDC token
+    
     """
-    if email == "":
-        email = username + "@example.com"
+    # :param username:
+    # :type username: str
+    # :param name:
+    # :type name: str
+    # :param email:
+    # :type email: str
+    username = userinfo["preferred_username"]
+    
+    if userinfo.get("email") is None:
+        email = userinfo.get("preferred_username") + "@example.com"
+
+    name = str(userinfo.get('given_name')  or '') + ' ' + str(userinfo.get('family_name') or '')
     if name == "":
         name = username
 
@@ -131,7 +142,10 @@ def make_new_person(
         "username": username,
         "name": name,
         "email": email,
+        "email_verified": bool(userinfo.get("email_verified") or False),
         "disabled": False,
+        "date_created": datetime.now(tz = timezone.utc),
+        "last_authenticated": datetime.fromtimestamp(userinfo.get("auth_time"), tz = timezone.utc),
         "sessioncode": "",
         "locked_at": 0,
         "failed_logins": [],
