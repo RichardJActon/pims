@@ -48,9 +48,10 @@ def construct_bp(people, projects, oauth, oauth_providers):
             if person is None:
                 make_new_person(
                     people,
-                    username = userinfo['preferred_username'],
-                    name = userinfo['given_name'] + ' ' + userinfo['family_name'],
-                    email = userinfo['email']
+                    userinfo
+                    # username = userinfo['preferred_username'],
+                    # name = userinfo['given_name'] + ' ' + userinfo['family_name'],
+                    # email = userinfo['email']
                 )
                 person = people.find_one(user_query)
                 raise Exception(
@@ -69,8 +70,8 @@ def construct_bp(people, projects, oauth, oauth_providers):
         except Exception as e:
             current_app.logger.info(str(e))
         
-        # session["user"] = oauth.testing.userinfo()
-        # current_app.logger.info(session.get('user').get('userinfo'))
+        person["last_authenticated"] = userinfo.get('auth_time')
+        
         return redirect('/')
         # return redirect('/profile')
 
