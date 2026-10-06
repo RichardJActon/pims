@@ -16,7 +16,8 @@ from datetime import datetime
 import time
 import ldap # move to ldap3? - better docs # move to ldap3? - better docs
 
-def construct_bp(people, projects, ips, oauth, oauth_providers):
+# ips,
+def construct_bp(people, projects, oauth, oauth_providers):
     bp = Blueprint('login', __name__) 
     
     @bp.route('/login')
