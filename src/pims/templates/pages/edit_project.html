@@ -1,81 +1,77 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row text-center">
-    {% if project['project_id'] %}
-        <h2>Edit Project {{ project["project_id"] }}</h2>
-    {% else %}
-        <h2>New Project</h2>
-    {% endif %}
+	{% if project['project_id'] %}
+	<h2>Edit Project {{ project["project_id"] }}</h2>
+	{% else %}
+	<h2>New Project</h2>
+	{% endif %}
 </div>
 
 <div class="row">
-    <div class="col-md-3">
-        <div class="form-group">
-            <label for="project_owner">Owner</label>
-            <input type="text" class="form-control" id="project_owner" placeholder="Enter Username">
-        </div>
-    </div>
-    <div class="col-md-2">
-        <button id="checkowner" type="button" class="btn btn-primary mt-4">Check user</button>
-    </div>
-    <div class="col-md-4">
-        <p id="checkedname" class="mt-4"></p>
-    </div>
-
+	<div class="col-md-3">
+		<div class="form-group">
+			<label for="project_owner">Owner</label>
+			<input type="text" class="form-control" id="project_owner" placeholder="Enter Username">
+		</div>
+	</div>
+	<div class="col-md-2">
+		<button id="checkowner" type="button" class="btn btn-primary mt-4">Check user</button>
+	</div>
+	<div class="col-md-4">
+		<p id="checkedname" class="mt-4"></p>
+	</div>
 </div>
 
 <div class="row">
-    <div class="form-group">
-        <label for="project_title">Title</label>
-        <input type="text" class="form-control" id="project_title" placeholder="Short title name" value="{{ project.title }}">
-    </div>
+	<div class="form-group">
+		<label for="project_title">Title</label>
+		<input type="text" class="form-control" id="project_title" placeholder="Short title name" value="{{ project.title }}">
+	</div>
 
-    <div class="form-group">
-        <label for="project_description">Description</label>
-        <textarea class="form-control" id="project_description" rows="5">{{ project.description }}</textarea>
-    </div>
+	<div class="form-group">
+		<label for="project_description">Description</label>
+		<textarea class="form-control" id="project_description" rows="5">{{ project.description }}</textarea>
+	</div>
 </div>
 
 <div class="row">
-    <div class="col-md-3">
-        <div class="form-group">
-            <label for="project_tags">Tags</label>
-            <input type="text" class="form-control" id="new_tag">
-            <button id="addtag" type="button" class="btn btn-primary btn-sm">Add New</button>
-        </div>
-    </div>
-    <div class="col-md-9">
-        <div class="mt-4" id="added_tags">
-            {% for tag in project.tags %}
-                <button type="button" class="btn btn-sm btn-secondary tag_value">{{ tag }}<span class="tagclose"> &times;</span></button>
-            {% endfor %}
-        </div>
-    </div>
+	<div class="col-md-3">
+		<div class="form-group">
+			<label for="project_tags">Tags</label>
+			<input type="text" class="form-control" id="new_tag">
+			<button id="addtag" type="button" class="btn btn-primary btn-sm">Add New</button>
+		</div>
+	</div>
+	<div class="col-md-9">
+		<div class="mt-4" id="added_tags">
+			{% for tag in project.tags %}
+			<button type="button" class="btn btn-sm btn-secondary tag_value">{{ tag }}<span class="tagclose">&times;</span></button>
+			{% endfor %}
+		</div>
+	</div>
 </div>
 
 <div class="row mt-5">
-    <button id="saveproject" type="button" class="btn btn-primary" style="width:25%;margin-left: auto;margin-right: auto;">Save Project</button>
+	<button id="saveproject" type="button" class="btn btn-primary" style="width:25%;margin-left: auto;margin-right: auto;">Save Project</button>
 </div>
-
 
 <!-- Modal -->
 <div class="modal fade" id="editprojecterror" tabindex="-1" role="dialog" aria-labelledby="errorTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="errorTitle">Error</h5>
-      </div>
-      <div class="modal-body" id="errormessage">
-        Something went wrong
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Try Again</button>
-      </div>
-    </div>
-  </div>
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="errorTitle">Error</h5>
+			</div>
+			<div class="modal-body" id="errormessage">
+				Something went wrong
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-danger" data-bs-dismiss="modal">Try Again</button>
+			</div>
+		</div>
+	</div>
 </div>
-
-
 
 {% endblock %}
 
