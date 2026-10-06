@@ -80,12 +80,12 @@ def create_app():
 
     # Declare widely used collections
     people = dbc.people_collection
-    ips = dbc.ips_collection
+    # ips = dbc.ips_collection
     projects = dbc.projects_collection
 
 # Blueprint constructors ----
     app.register_blueprint(index.construct_bp(people, projects))
-    app.register_blueprint(login.construct_bp(people, projects, ips, oauth, oauth_providers))
+    app.register_blueprint(login.construct_bp(people, projects, oauth, oauth_endpoints)) # ips, 
     app.register_blueprint(pages.construct_bp(people, projects))
     
     # app.register_blueprint(pages.bp)
