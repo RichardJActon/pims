@@ -19,12 +19,22 @@ from pprint import pprint
 
 def create_app():
     app = Flask(__name__)
+
+    # Ensure responses aren't cached - try to address pages still being accessible after logout if you hit back
+    # does not appear to have desired effect
+    # @app.after_request
+    # def after_request(response):
+    #     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate post-check=0, pre-check=0"
+    #     return response
+
+# Logging ----
     logging.basicConfig(
         format='[%(asctime)s] - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     # app_exception_logging = partial(exception_logging, logger = current_app.logger)
 
+# App Configuration ----
     config_path = "configuration/config.json"
     default_config_path_used = False
     try:
@@ -50,7 +60,8 @@ def create_app():
 
     # print complete config to log for debugging
     # app.logger.info(pprint(dict(app.config.items())))
-     
+
+# Authentication ----
     oauth = OAuth(app)
     # oauth.register(
     #     name = "testing",
@@ -61,8 +72,9 @@ def create_app():
     #     client_kwargs = {"scope": "openid email profile"}
     # )
     auth.register_oauth_endpoints(oauth, app.config["OAUTH_ENDPOINTS"])
-    oauth_providers = [*app.config["OAUTH_ENDPOINTS"]]
-    
+    oauth_endpoints = [*app.config["OAUTH_ENDPOINTS"]]
+
+# Mongo DB connection ----
     # Connect to the database
     dbc = db.connect_to_database(app.config["MONGO"])
 
@@ -71,7 +83,7 @@ def create_app():
     ips = dbc.ips_collection
     projects = dbc.projects_collection
 
-    # Blueprint constructors
+# Blueprint constructors ----
     app.register_blueprint(index.construct_bp(people, projects))
     app.register_blueprint(login.construct_bp(people, projects, ips, oauth, oauth_providers))
     app.register_blueprint(pages.construct_bp(people, projects))
