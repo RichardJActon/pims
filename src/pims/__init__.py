@@ -18,7 +18,7 @@ from pprint import pprint
 # from pims.logging_utils import exception_logging
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder = "static", template_folder = "templates")
 
     # Ensure responses aren't cached - try to address pages still being accessible after logout if you hit back
     # does not appear to have desired effect

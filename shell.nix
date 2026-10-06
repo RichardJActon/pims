@@ -15,6 +15,7 @@ pkgs.mkShell {
     pkgs.mongodb
     pkgs.openldap
     pkgs.psmisc
+    pkgs.nodejs_26
   ];
   shellHook = ''
     source .venv/bin/activate 
