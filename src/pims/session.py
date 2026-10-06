@@ -41,13 +41,13 @@ def checksession (sessioncode: str, people) -> Dict[str, Any]:
     person = people.find_one({"sessioncode":sessioncode})
     try:
         if person is None:
-            raise Exception("ERROR| Person not found for this session")
+            raise Exception("Person not found for this session")
     except Exception as e:
         current_app.logger.exception(e)
 
     try:
         if "disabled" in person and person["disabled"]:
-            raise Exception("ERROR| Account disabled")
+            raise Exception("Account disabled")
     except Exception as e:
         current_app.logger.exception(str(e))
 
