@@ -1,4 +1,4 @@
-# login
+# Login ----
 from flask import (
     Blueprint,
     render_template,
@@ -26,21 +26,18 @@ def construct_bp(people, projects, ips, oauth, oauth_providers):
     @bp.route('/oauth_login/<oauth_provider>')
     def oauth_login(oauth_provider):
         redirect_uri = url_for('login.authorize', oauth_provider = oauth_provider, _external=True)
-        # redirect_uri = url_for('login.authorize/<oauth_provider>', _external=True)
-        # redirect_uri = url_for('login.authorize', _external=True)
         return oauth.__getattr__(oauth_provider).authorize_redirect(redirect_uri)
 
-    @bp.route('/authorize/<oauth_provider>')# , methods = ['POST', 'GET'])
+    @bp.route('/authorize/<oauth_provider>')
     def authorize(oauth_provider):
         token = oauth.__getattr__(oauth_provider).authorize_access_token()
-        # resp = oauth.testing.get('user')
         userinfo = token.get('userinfo')
         current_app.logger.info(
             "User: " + userinfo.get('preferred_username') +
             " logged in, Authorised at: " +
             str(datetime.fromtimestamp(userinfo.get('auth_time')))
         )
-
+        # resp = oauth.testing.get('user')
         # resp.raise_for_status()
         # profile = resp.json()
         user_query = {"username": userinfo["preferred_username"]}
@@ -85,7 +82,6 @@ def construct_bp(people, projects, ips, oauth, oauth_providers):
     def logout():
         id_token = session.pop("id_token", None)
         redirect_uri = url_for('login.logged_out', _external=True)
-        # redirect_uri = url_for('login.login', _external=True)
         return oauth.__getattr__(session.get("oauth_provider")).logout_redirect(
             post_logout_redirect_uri = redirect_uri,
             id_token_hint = id_token
@@ -94,9 +90,9 @@ def construct_bp(people, projects, ips, oauth, oauth_providers):
     @bp.route('/logged_out')
     def logged_out():
         state_data = oauth.__getattr__(session["oauth_provider"]).validate_logout_response()
+        # state_data just contains the re-direct URL to this page
         session.pop("user", None)
         return render_template("pages/logout_confirmation.html")
-        # return 'You have been logged out.'
 
     # @bp.route("/processlogin", methods = ['POST', 'GET'])
     # def process_login():
